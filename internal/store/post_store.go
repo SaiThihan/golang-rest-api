@@ -16,6 +16,7 @@ type PostStore interface {
 	CreatePost(*Post) (*Post, error)
 	GetPosts() ([]Post, error)
 	GetPostById(id int64) (*Post, error)
+	UpdatePost(post *Post) (*Post, error)
 	DeletePost(id int64) error
 }
 
@@ -118,4 +119,39 @@ func (pg *PostgresPostStore) DeletePost(id int64) error {
 	}
 
 	return tx.Commit()
+}
+
+func (pg *PostgresPostStore) UpdatePost(post *Post) (*Post, error) {
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback()
+
+	query := `UPDATE posts SET title = $1, content = $2 WHERE id= $3 RETURNING id, title, content, created_at`
+
+	result, err := tx.Exec(query, post.Title, post.Content, post.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rowsEffected, err := result.RowsAffected()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if rowsEffected == 0 {
+		return nil, nil
+	}
+
+	err = tx.Commit()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
 }

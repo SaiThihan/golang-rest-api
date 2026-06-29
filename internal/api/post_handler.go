@@ -107,3 +107,43 @@ func (ph *PostHandler) HandleDeletePost(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 	json.NewEncoder(w).Encode(nil)
 }
+
+func (ph *PostHandler) HandleUpdatePost(w http.ResponseWriter, r *http.Request) {
+	paramPostId := chi.URLParam(r, "id")
+	if paramPostId == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	postId, err := strconv.ParseInt(paramPostId, 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	var post store.Post
+
+	err = json.NewDecoder(r.Body).Decode(&post)
+	if err != nil {
+		http.Error(w, "Invalid JSON Request", http.StatusBadRequest)
+		return
+	}
+
+	post.ID = postId
+
+	updatedPost, err := ph.postStore.UpdatePost(&post)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to update post", http.StatusInternalServerError)
+		return
+	}
+
+	if updatedPost == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(updatedPost)
+}
