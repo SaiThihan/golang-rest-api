@@ -1,0 +1,13 @@
+services: 
+  db:
+    container_name: "postgres_with_go"
+    image: postgres:16.11-alpine3.23
+    volumes:
+      - "./database/postgres_data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pass"
+    restart: unless-stopped
