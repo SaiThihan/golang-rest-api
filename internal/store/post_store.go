@@ -21,7 +21,7 @@ type PostgresPostStore struct {
 	db *sql.DB
 }
 
-func newPostgresPostStore(db *sql.DB) *PostgresPostStore {
+func NewPostgresPostStore(db *sql.DB) *PostgresPostStore {
 	return &PostgresPostStore{db: db}
 }
 
@@ -46,5 +46,10 @@ func (pg *PostgresPostStore) CreatePost(post *Post) (*Post, error) {
 		return nil, err
 	}
 
+	return post, nil
+}
+
+func (pg *PostgresPostStore) GetPostById(id int64) (*Post, error) {
+	post := &Post{}
 	return post, nil
 }

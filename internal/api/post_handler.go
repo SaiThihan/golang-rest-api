@@ -1,18 +1,23 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/SaiThihan/go-basic/internal/store"
 	"github.com/go-chi/chi/v5"
 )
 
 type PostHandler struct {
+	postStore store.PostStore
 }
 
-func NewPostHandler() *PostHandler {
-	return &PostHandler{}
+func NewPostHandler(ps store.PostStore) *PostHandler {
+	return &PostHandler{
+		postStore: ps,
+	}
 }
 
 // posts/:id
@@ -33,5 +38,22 @@ func (ph *PostHandler) HandleGetPostById(w http.ResponseWriter, r *http.Request)
 }
 
 func (ph *PostHandler) HandleCreatePost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Post created successfully")
+	var post store.Post
+
+	err := json.NewDecoder(r.Body).Decode(&post)
+	if err != nil {
+		http.Error(w, "Invalid JSON Request", http.StatusBadRequest)
+		return
+	}
+
+	createdPost, err := ph.postStore.CreatePost(&post)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to create post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(createdPost)
 }
