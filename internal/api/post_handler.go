@@ -83,3 +83,27 @@ func (ph *PostHandler) HandleGetPostById(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(post)
 }
+
+func (ph *PostHandler) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
+	paramPostId := chi.URLParam(r, "id")
+	if paramPostId == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	postId, err := strconv.ParseInt(paramPostId, 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	err = ph.postStore.DeletePost(postId)
+	if err != nil {
+		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	json.NewEncoder(w).Encode(nil)
+}

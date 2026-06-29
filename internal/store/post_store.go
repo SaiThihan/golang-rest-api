@@ -16,6 +16,7 @@ type PostStore interface {
 	CreatePost(*Post) (*Post, error)
 	GetPosts() ([]Post, error)
 	GetPostById(id int64) (*Post, error)
+	DeletePost(id int64) error
 }
 
 type PostgresPostStore struct {
@@ -91,4 +92,30 @@ func (pg *PostgresPostStore) GetPostById(id int64) (*Post, error) {
 	}
 
 	return post, nil
+}
+
+func (pg *PostgresPostStore) DeletePost(id int64) error {
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	query := `DELETE FROM posts WHERE id = $1`
+	result, err := tx.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return tx.Commit()
 }
