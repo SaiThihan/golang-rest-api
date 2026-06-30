@@ -34,7 +34,7 @@ func NewApplication() (*Application, error) {
 	}
 
 	postStore := store.NewPostgresPostStore(postgresDB)
-	postHandler := api.NewPostHandler(postStore)
+	postHandler := api.NewPostHandler(postStore, logger)
 
 	app := &Application{
 		Logger:      logger,
