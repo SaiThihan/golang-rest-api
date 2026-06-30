@@ -11,3 +11,16 @@ services:
       POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "pass"
     restart: unless-stopped
+  
+  test_db:
+    container_name: "test_postgres_with_go"
+    image: postgres:16.11-alpine3.23
+    volumes:
+      - "./database/test_postgres_data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: "test_postgres"
+      POSTGRES_USER: "test_user"
+      POSTGRES_PASSWORD: "test_pass"
+    restart: unless-stopped
