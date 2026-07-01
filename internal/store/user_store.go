@@ -1,18 +1,50 @@
 package store
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type password struct {
 	plaintext *string
 	hash      []byte
 }
 
+func (p *password) HashPassword(plainText string) error {
+	hashpassword, err := bcrypt.GenerateFromPassword([]byte(plainText), 12)
+
+	if err != nil {
+		return err
+	}
+
+	p.plaintext = &plainText
+	p.hash = hashpassword
+
+	return nil
+}
+
+func (p *password) ComparePassword(plainText string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plainText))
+
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+	return true, nil
+}
+
 type User struct {
-	ID           int    `json:"id"`
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"-"`
-	CreatedAt    string `json:"created_at"`
+	ID           int       `json:"id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	PasswordHash *password `json:"-"`
+	CreatedAt    string    `json:"created_at"`
 }
 
 type PostgresUserStore struct {
@@ -43,9 +75,7 @@ func (s *PostgresUserStore) CreateUser(user *User) error {
 }
 
 func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
-	user := &User{
-		PasswordHash: "",
-	}
+	user := &User{}
 
 	query := `SELECT id,username,email, created_at FROM users WHERE username = $1`
 	err := s.db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt)
