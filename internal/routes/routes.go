@@ -17,5 +17,6 @@ func SetupRoutes(app *app.Application) *chi.Mux {
 	r.Delete("/posts/{id}", app.PostHandler.HandleDeletePost)
 
 	r.Post("/register", app.UserHandler.HandleRegister)
+	r.Post("/auth/token", app.TokenHandler.HandleTokenCreate)
 	return r
 }

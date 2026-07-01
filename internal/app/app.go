@@ -13,10 +13,11 @@ import (
 )
 
 type Application struct {
-	Logger      *log.Logger
-	PostHandler *api.PostHandler
-	UserHandler *api.UserHandler
-	DB          *sql.DB
+	Logger       *log.Logger
+	PostHandler  *api.PostHandler
+	UserHandler  *api.UserHandler
+	TokenHandler *api.TokenHandler
+	DB           *sql.DB
 }
 
 func NewApplication() (*Application, error) {
@@ -38,12 +39,15 @@ func NewApplication() (*Application, error) {
 	postHandler := api.NewPostHandler(postStore, logger)
 	userStore := store.NewPostgresUserStore(postgresDB)
 	userHandler := api.NewUserHandler(userStore, logger)
+	tokenStore := store.NewPostgresTokenStore(postgresDB)
+	tokenHandler := api.NewTokenHandler(userStore, tokenStore, logger)
 
 	app := &Application{
-		Logger:      logger,
-		PostHandler: postHandler,
-		UserHandler: userHandler,
-		DB:          postgresDB,
+		Logger:       logger,
+		PostHandler:  postHandler,
+		UserHandler:  userHandler,
+		TokenHandler: tokenHandler,
+		DB:           postgresDB,
 	}
 	return app, nil
 }

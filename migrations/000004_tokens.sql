@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE tokens (
+CREATE TABLE IF NOT EXISTS tokens (
     Hash BYTEA PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expiry TIMESTAMP(0) WITH TIME ZONE NOT NULL,
