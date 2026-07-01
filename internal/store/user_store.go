@@ -40,11 +40,11 @@ func (p *password) ComparePassword(plainText string) (bool, error) {
 }
 
 type User struct {
-	ID           int       `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash *password `json:"-"`
-	CreatedAt    string    `json:"created_at"`
+	ID           int      `json:"id"`
+	Username     string   `json:"username"`
+	Email        string   `json:"email"`
+	PasswordHash password `json:"-"`
+	CreatedAt    string   `json:"created_at"`
 }
 
 type PostgresUserStore struct {
@@ -65,7 +65,7 @@ type UserStore interface {
 
 func (s *PostgresUserStore) CreateUser(user *User) error {
 	query := `INSERT INTO users (username, email, password_hash ) VALUES ($1, $2, $3) RETURNING id, created_at`
-	err := s.db.QueryRow(query, user.Username, user.Email, user.PasswordHash).Scan(&user.ID, &user.CreatedAt)
+	err := s.db.QueryRow(query, user.Username, user.Email, user.PasswordHash.hash).Scan(&user.ID, &user.CreatedAt)
 
 	if err != nil {
 		return err

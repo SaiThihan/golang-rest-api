@@ -34,8 +34,8 @@ func (uh *UserHandler) validateRegisterRequest(req *registerUserRequest) error {
 		return errors.New("username is required")
 	}
 
-	if len(req.Username) < 15 {
-		return errors.New("username must be at least 15 characters long")
+	if len(req.Username) < 4 {
+		return errors.New("username must be at least 4 characters long")
 	}
 
 	if req.Email == "" {
@@ -95,5 +95,5 @@ func (uh *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, utils.Payload{"message": "User created successfully"})
+	utils.WriteJSON(w, http.StatusCreated, utils.Payload{"user": user})
 }
