@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/SaiThihan/go-basic/internal/api"
+	"github.com/SaiThihan/go-basic/internal/middleware"
 	"github.com/SaiThihan/go-basic/internal/store"
 	"github.com/SaiThihan/go-basic/migrations"
 )
@@ -17,6 +18,7 @@ type Application struct {
 	PostHandler  *api.PostHandler
 	UserHandler  *api.UserHandler
 	TokenHandler *api.TokenHandler
+	Middleware   *middleware.UserMiddleware
 	DB           *sql.DB
 }
 
@@ -42,11 +44,16 @@ func NewApplication() (*Application, error) {
 	tokenStore := store.NewPostgresTokenStore(postgresDB)
 	tokenHandler := api.NewTokenHandler(userStore, tokenStore, logger)
 
+	middlewareHandler := &middleware.UserMiddleware{
+		UserStore: userStore,
+	}
+
 	app := &Application{
 		Logger:       logger,
 		PostHandler:  postHandler,
 		UserHandler:  userHandler,
 		TokenHandler: tokenHandler,
+		Middleware:   middlewareHandler,
 		DB:           postgresDB,
 	}
 	return app, nil

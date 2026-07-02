@@ -65,3 +65,15 @@ func (um *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (um *UserMiddleware) RequireAuthenticatedUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := GetUser(r)
+		if user.IsGuestUser() {
+			utils.WriteJSON(w, http.StatusUnauthorized, utils.Payload{"error": "You must be logged in to access this resource"})
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
