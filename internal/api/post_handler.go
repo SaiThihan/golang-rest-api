@@ -1,10 +1,13 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
+	"github.com/SaiThihan/go-basic/internal/middleware"
 	"github.com/SaiThihan/go-basic/internal/store"
 	"github.com/SaiThihan/go-basic/internal/utils"
 )
@@ -29,6 +32,14 @@ func (ph *PostHandler) HandleCreatePost(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Invalid JSON Request", http.StatusBadRequest)
 		return
 	}
+
+	currentUser := middleware.GetUser(r)
+	if currentUser == nil || currentUser == store.GuestUser {
+		utils.WriteJSON(w, http.StatusUnauthorized, utils.Payload{"error": "you must be logged in to create a post"})
+		return
+	}
+
+	post.UserID = currentUser.ID
 
 	createdPost, err := ph.postStore.CreatePost(&post)
 	if err != nil {
@@ -81,6 +92,28 @@ func (ph *PostHandler) HandleDeletePost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	currentUser := middleware.GetUser(r)
+
+	if currentUser == nil || currentUser == store.GuestUser {
+		utils.WriteJSON(w, http.StatusUnauthorized, utils.Payload{"error": "you must be logged in to delete a post"})
+		return
+	}
+
+	postOwnerID, err := ph.postStore.GetPostOwner(postId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.WriteJSON(w, http.StatusNotFound, utils.Payload{"error": "Post not found"})
+			return
+		}
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Payload{"error": "Failed to retrieve post owner"})
+		return
+	}
+
+	if postOwnerID != currentUser.ID {
+		utils.WriteJSON(w, http.StatusForbidden, utils.Payload{"error": "You are not authorized to delete this post"})
+		return
+	}
+
 	err = ph.postStore.DeletePost(postId)
 
 	if err != nil {
@@ -108,6 +141,23 @@ func (ph *PostHandler) HandleUpdatePost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	post.ID = postId
+
+	currentUser := middleware.GetUser(r)
+
+	postOwnerID, err := ph.postStore.GetPostOwner(postId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.WriteJSON(w, http.StatusNotFound, utils.Payload{"error": "Can't update post"})
+			return
+		}
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Payload{"error": "Failed to retrieve post owner"})
+		return
+	}
+
+	if postOwnerID != currentUser.ID {
+		utils.WriteJSON(w, http.StatusForbidden, utils.Payload{"error": "You are not authorized to update this post"})
+		return
+	}
 
 	updatedPost, err := ph.postStore.UpdatePost(&post)
 	if err != nil {

@@ -9,6 +9,7 @@ type Post struct {
 	ID        int64     `json:"id"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
+	UserID    int       `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -18,6 +19,7 @@ type PostStore interface {
 	GetPostById(id int64) (*Post, error)
 	UpdatePost(post *Post) (*Post, error)
 	DeletePost(id int64) error
+	GetPostOwner(id int64) (int, error)
 }
 
 type PostgresPostStore struct {
@@ -37,8 +39,8 @@ func (pg *PostgresPostStore) CreatePost(post *Post) (*Post, error) {
 	// Ensure that the transaction is rolled back if an error occurs
 	defer tx.Rollback()
 
-	query := `INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id`
-	err = tx.QueryRow(query, post.Title, post.Content).Scan(&post.ID)
+	query := `INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id`
+	err = tx.QueryRow(query, post.Title, post.Content, post.UserID).Scan(&post.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -154,4 +156,14 @@ func (pg *PostgresPostStore) UpdatePost(post *Post) (*Post, error) {
 	}
 
 	return post, nil
+}
+
+func (pg *PostgresPostStore) GetPostOwner(postID int64) (int, error) {
+	var userID int
+	query := `SELECT user_id FROM posts WHERE id = $1`
+
+	if err := pg.db.QueryRow(query, postID).Scan(&userID); err != nil {
+		return 0, err
+	}
+	return userID, nil
 }
