@@ -8,9 +8,14 @@ import (
 
 	"github.com/SaiThihan/go-basic/internal/app"
 	"github.com/SaiThihan/go-basic/internal/routes"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("No .env file found, using environment variables")
+	}
 
 	app, err := app.NewApplication()
 
@@ -18,7 +23,7 @@ func main() {
 		panic(err)
 	}
 
-	app.Logger.Println("Starting server on :8080")
+	app.Logger.Println("Go Basic API Server is starting...")
 
 	var port int
 	flag.IntVar(&port, "port", 8080, "Port to listen on")

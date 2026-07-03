@@ -4,13 +4,18 @@ import (
 	"database/sql"
 	"fmt"
 	"io/fs"
+	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
 func Open() (*sql.DB, error) {
-	connectionString := "host=localhost user=user password=pass dbname=postgres port=5432 sslmode=disable"
+	connectionString := os.Getenv("DATABASE_URL")
+
+	if connectionString == "" {
+		return nil, fmt.Errorf("db: connection string is empty")
+	}
 
 	db, err := sql.Open("pgx", connectionString)
 	if err != nil {
