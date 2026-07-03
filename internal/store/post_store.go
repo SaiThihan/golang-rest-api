@@ -55,7 +55,7 @@ func (pg *PostgresPostStore) CreatePost(post *Post) (*Post, error) {
 }
 
 func (pg *PostgresPostStore) GetPosts() ([]Post, error) {
-	query := `SELECT id, title, content, created_at FROM posts ORDER BY created_at DESC`
+	query := `SELECT id, title, content, user_id, created_at FROM posts ORDER BY created_at DESC`
 
 	rows, err := pg.db.Query(query)
 
@@ -70,7 +70,7 @@ func (pg *PostgresPostStore) GetPosts() ([]Post, error) {
 	for rows.Next() {
 		var post Post
 
-		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
 
 		if err != nil {
 			return nil, err
@@ -82,9 +82,9 @@ func (pg *PostgresPostStore) GetPosts() ([]Post, error) {
 
 func (pg *PostgresPostStore) GetPostById(id int64) (*Post, error) {
 	post := &Post{}
-	query := `SELECT id, title, content, created_at FROM posts WHERE id = $1`
+	query := `SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1`
 
-	err := pg.db.QueryRow(query, id).Scan(&post.ID, &post.Title, &post.Content, &post.CreatedAt)
+	err := pg.db.QueryRow(query, id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
